@@ -208,10 +208,19 @@ int main(int argc, char **argv)
 	bool TouchPadPressedWhenSwiping = IniFile.ReadBoolean("Xbox", "TouchPadPressedWhenSwiping", true);
 	bool EnableXboxButton = IniFile.ReadBoolean("Xbox", "EnableXboxButton", true);
 
-	std::string KEY_ID_XBOX_SHAKING_1_NAME = IniFile.ReadString("Xbox", "MotionShakingKey1", "BACK");
+
+	// ZAdd: Motion
+	std::string KEY_ID_XBOX_SHAKING_1_NAME = IniFile.ReadString("Xbox", "MotionShakingKey1", "DPAD-UP");
 	int KEY_ID_XBOX_SHAKING_1 = XboxKeyNameToXboxKeyCode(KEY_ID_XBOX_SHAKING_1_NAME);
-	std::string KEY_ID_XBOX_SHAKING_2_NAME = IniFile.ReadString("Xbox", "MotionShakingKey2", "RIGHT-SHOULDER");
+
+	std::string KEY_ID_XBOX_SHAKING_2_NAME = IniFile.ReadString("Xbox", "MotionShakingKey2", "DPAD-DOWN");
 	int KEY_ID_XBOX_SHAKING_2 = XboxKeyNameToXboxKeyCode(KEY_ID_XBOX_SHAKING_2_NAME);
+
+	std::string KEY_ID_XBOX_SHAKING_3_NAME = IniFile.ReadString("Xbox", "MotionShakingKey3", "DPAD-LEFT");
+	int KEY_ID_XBOX_SHAKING_3 = XboxKeyNameToXboxKeyCode(KEY_ID_XBOX_SHAKING_3_NAME);
+
+	std::string KEY_ID_XBOX_SHAKING_4_NAME = IniFile.ReadString("Xbox", "MotionShakingKey4", "DPAD-RIGHT");
+	int KEY_ID_XBOX_SHAKING_4 = XboxKeyNameToXboxKeyCode(KEY_ID_XBOX_SHAKING_4_NAME);
 
 	float DeadZoneLeftStickX = IniFile.ReadFloat("Xbox", "DeadZoneLeftStickX", 0);
 	float DeadZoneLeftStickY = IniFile.ReadFloat("Xbox", "DeadZoneLeftStickY", 0);
@@ -273,11 +282,11 @@ int main(int argc, char **argv)
 	auto ret = vigem_connect(client);
 	const auto ds4 = vigem_target_ds4_alloc();
 	ret = vigem_target_add(client, ds4);
-	ret = vigem_target_ds4_register_notification(client, ds4, &notification, nullptr);
+	//ret = vigem_target_ds4_register_notification(client, ds4, &notification, nullptr);
 	DS4_REPORT_EX report;
 	bool TouchpadSwipeUp = false, TouchpadSwipeDown = false;
 	bool TouchpadSwipeLeft = false, TouchpadSwipeRight = false;
-	bool MotionShaking = false, MotionShakingSwap = false;
+	bool MotionShaking = false, MotionShakingUp = false, MotionShakingDown = false, MotionShakingLeft = false, MotionShakingRight = false, MotionShakingSwap = false;	// ZAdd: New variables for motion
 
 	int SkipPollCount = 0;
 
@@ -308,7 +317,7 @@ int main(int argc, char **argv)
 	// Write current mode
 	if (EmulationMode == XboxMode) {
 		printf("\n Emulation with Xbox controller.\n");
-		printf_s(" Touchpad press: \"BACK\".\n Touchpad movement: \"BACK\" + \"RIGHT-STICK\".\n Motion shaking: \"%s\" + \"%s\".\n", KEY_ID_XBOX_SHAKING_1_NAME.c_str(), KEY_ID_XBOX_SHAKING_2_NAME.c_str());
+		printf_s(" Touchpad press: \"BACK\".\n Touchpad movement: \"BACK\" + \"RIGHT-STICK\".\n Motion control: \"%s\", \"%s\", \"%s\", \"%s\".\n", KEY_ID_XBOX_SHAKING_1_NAME.c_str(), KEY_ID_XBOX_SHAKING_2_NAME.c_str(), KEY_ID_XBOX_SHAKING_3_NAME.c_str(), KEY_ID_XBOX_SHAKING_4_NAME.c_str());
 
 	} else {
 		printf("\r\n Emulation with keyboard and mouse.\n");
@@ -419,25 +428,66 @@ int main(int argc, char **argv)
 
 				if (EnableXboxButton && myPState.Gamepad.wButtons & XINPUT_GAMEPAD_GUIDE) report.bSpecial |= DS4_SPECIAL_BUTTON_PS;
 
+
+				// ZInterest: Motion
+
 				// Motion shaking
-				if (myPState.Gamepad.wButtons & KEY_ID_XBOX_SHAKING_1 && myPState.Gamepad.wButtons &  KEY_ID_XBOX_SHAKING_2) {
-					myPState.Gamepad.wButtons &= ~KEY_ID_XBOX_SHAKING_1; myPState.Gamepad.wButtons &= ~KEY_ID_XBOX_SHAKING_2;
+				if (myPState.Gamepad.wButtons & KEY_ID_XBOX_SHAKING_1) {
+					//myPState.Gamepad.wButtons &= ~KEY_ID_XBOX_SHAKING_1;
 					MotionShaking = true;
-				} else
+					MotionShakingUp = true;
+					MotionShakingDown = false;
+					MotionShakingLeft = false;
+					MotionShakingRight = false;
+				}
+				else if (myPState.Gamepad.wButtons & KEY_ID_XBOX_SHAKING_2) {
+					//myPState.Gamepad.wButtons &= ~KEY_ID_XBOX_SHAKING_2;
+					MotionShaking = true;
+					MotionShakingUp = false;
+					MotionShakingDown = true;
+					MotionShakingLeft = false;
+					MotionShakingRight = false;
+					
+				}
+				else if (myPState.Gamepad.wButtons & KEY_ID_XBOX_SHAKING_3) {
+					//myPState.Gamepad.wButtons &= ~KEY_ID_XBOX_SHAKING_3;
+					MotionShaking = true;
+					MotionShakingUp = false;
+					MotionShakingDown = false;
+					MotionShakingLeft = true;
+					MotionShakingRight = false;
+					
+				}
+				else if (myPState.Gamepad.wButtons & KEY_ID_XBOX_SHAKING_4) {
+					//myPState.Gamepad.wButtons &= ~KEY_ID_XBOX_SHAKING_4;
+					MotionShaking = true;
+					MotionShakingUp = false;
+					MotionShakingDown = false;
+					MotionShakingLeft = false;
+					MotionShakingRight = true;
+				}
+				else
+				{
 					MotionShaking = false;
+					MotionShakingUp = false;
+					MotionShakingDown = false;
+					MotionShakingLeft = false;
+					MotionShakingRight = false;
+				}
+					
 
 				// Swap share and touchpad
-				if (SwapShareTouchPad == false) {
+				/*if (SwapShareTouchPad == false) {
 					if ((GetAsyncKeyState(KEY_ID_SHARE) & 0x8000) != 0)
 						report.wButtons |= DS4_BUTTON_SHARE;
 					if (myPState.Gamepad.wButtons & XINPUT_GAMEPAD_BACK)
 						report.bSpecial |= DS4_SPECIAL_BUTTON_TOUCHPAD;
-				} else {
+				} else {*/
 					if ((GetAsyncKeyState(KEY_ID_SHARE) & 0x8000) != 0)
 						report.bSpecial |= DS4_SPECIAL_BUTTON_TOUCHPAD;
 					if (myPState.Gamepad.wButtons & XINPUT_GAMEPAD_BACK)
 						report.wButtons |= DS4_BUTTON_SHARE;
-				}
+				//}
 
 				if (myPState.Gamepad.wButtons & XINPUT_GAMEPAD_Y)
 					report.wButtons |= DS4_BUTTON_TRIANGLE;
@@ -722,17 +772,38 @@ int main(int argc, char **argv)
 		report.wGyroZ = trunc(Clamp(GyroZ / GyroSens * 32767, -32767, 32767)) * InverseZStatus;
 		// if ((GetAsyncKeyState(VK_NUMPAD1) & 0x8000) != 0) printf("%d\t%d\t%d\t%d\t%d\t%d\t\n", report.wAccelX, report.wAccelY, report.wAccelZ, report.wGyroX, report.wGyroY, report.wGyroZ);
 
+		// ZInterest: Sixaxis emulation
+
 		// Motion shaking
 		if (MotionShaking) {
-			MotionShakingSwap = !MotionShakingSwap;
-			if (MotionShakingSwap) {
-				report.wAccelX = -6530;		report.wAccelY = 6950;		report.wAccelZ = -710;
-				report.wGyroX = 2300;		report.wGyroY = 5000;		report.wGyroZ = 10;
-			} else {
-				report.wAccelX = 6830;		report.wAccelY = 7910;		report.wAccelZ = 1360;
-				report.wGyroX = 2700;		report.wGyroY = -5000;		report.wGyroZ = 140;
+			//MotionShakingSwap = !MotionShakingSwap;
+			//if (MotionShakingSwap) {
+			if (MotionShakingUp)
+			{
+				report.wAccelX = 0;		report.wAccelY = 0;		report.wAccelZ = 32767;
+				report.wGyroX = 0;		report.wGyroY = 0;		report.wGyroZ = 32767;
 			}
+			if (MotionShakingDown)
+			{
+				report.wAccelX = 0;		report.wAccelY = 0;		report.wAccelZ = -32767;
+				report.wGyroX = 0;		report.wGyroY = 0;		report.wGyroZ = -32767;
+			}
+			if (MotionShakingLeft)
+			{
+				report.wAccelX = 32767;		report.wAccelY = 0;		report.wAccelZ = 0;
+				report.wGyroX = 32767;		report.wGyroY = 0;		report.wGyroZ = 0;
+			}
+			if (MotionShakingRight)
+			{
+				report.wAccelX = -32767;		report.wAccelY = 0;		report.wAccelZ = 0;
+				report.wGyroX = -32767;		report.wGyroY = 0;		report.wGyroZ = 0;
+			}
+				
+		} else {
+			report.wAccelX = 0;		report.wAccelY = 32767;		report.wAccelZ = 0;
+			report.wGyroX = 0;		report.wGyroY = 32767;		report.wGyroZ = 0;
 		}
+		//}
 
 		// Multi mode keys
 		if ((GetAsyncKeyState(KEY_ID_PS) & 0x8000) != 0)
