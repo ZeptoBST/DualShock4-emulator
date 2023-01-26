@@ -395,6 +395,33 @@ int main(int argc, char **argv)
 				report.bThumbLY = (-(myPState.Gamepad.sThumbLY + ((USHRT_MAX / 2) - 1)) / 257);
 				report.bThumbLY = (report.bThumbLY == 0) ? 0xFF : report.bThumbLY;
 				
+
+				// ZAdd: Right stick inversion on controller
+				if (myPState.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB && myPState.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB && myPState.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER)
+				{
+					
+
+					if (InvertX == true && InvertY == true)
+					{
+						InvertX = false;
+						InvertY = false;
+					}
+					
+				}
+
+				if (myPState.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB && myPState.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB && myPState.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER)
+				{
+					
+
+					if (InvertX == false && InvertY == false)
+					{
+						InvertX = true;
+						InvertY = true;
+					}
+				}
+
+
+
 				// Inverting X
 				if (InvertX == false)
 					report.bThumbRX = ((myPState.Gamepad.sThumbRX + ((USHRT_MAX / 2) + 1)) / 257);
